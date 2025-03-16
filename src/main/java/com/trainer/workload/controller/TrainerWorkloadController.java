@@ -1,7 +1,6 @@
 package com.trainer.workload.controller;
 
 import com.trainer.workload.config.jwt.JwtUtil;
-import com.trainer.workload.model.Month;
 import com.trainer.workload.model.TrainerWorkload;
 import com.trainer.workload.model.TrainerWorkloadRequest;
 import com.trainer.workload.service.TrainerWorkloadService;
