@@ -1,61 +1,48 @@
 package com.trainer.workload.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
+@Slf4j
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class TrainerWorkload {
     private String username;
-    private String firstName;
-    private String lastName;
-    private boolean isActive;
-    private Map<Integer, Map<Month, Integer>> workload;
-    private int totalDuration;
+    private Map<Integer, Map<Month, Integer>> monthlyWorkload = new HashMap<>();
 
-    public TrainerWorkload(String username, String firstName, String lastName, boolean active) {
+    public TrainerWorkload(String username) {
         this.username = username;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.isActive = active;
-        this.workload = new ConcurrentHashMap<>();
     }
 
-    public <K, V> TrainerWorkload(String username, String firstName, String lastName, boolean active, HashMap<K,V> kvHashMap) {
-        this.username = username;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.isActive = active;
-        this.workload = workload != null ? new ConcurrentHashMap<>(workload) : new ConcurrentHashMap<>();
-        this.totalDuration = calculateTotalDuration(this.workload);
-    }
+    public void updateMonthlyWorkload(int year, int month, int duration, ActionType actionType) {
+        Month monthEnum = Month.values()[month - 1]; // Convert month integer to enum
+        monthlyWorkload.putIfAbsent(year, new HashMap<>()); // Ensure year exists
+        Map<Month, Integer> yearWorkload = monthlyWorkload.get(year); // Get workload for the year
 
-    public static TrainerWorkload fromEntity(TrainerWorkload trainer) {
-        if (trainer == null) {
-            throw new IllegalArgumentException("Trainer cannot be null");
+        if (actionType == ActionType.ADD) {
+            yearWorkload.merge(monthEnum, duration, Integer::sum); // Add hours for the month
+        } else if (actionType == ActionType.DELETE) {
+            yearWorkload.merge(monthEnum, -duration, Integer::sum); // Subtract hours for the month
+
+            // Remove the month if its total hours <= 0
+            if (yearWorkload.get(monthEnum) <= 0) {
+                yearWorkload.remove(monthEnum);
+                log.info("[TrainerWorkload] Removed month '{}' from year '{}'", monthEnum, year);
+            }
+
+            // Remove the year entry if it has no remaining months
+            if (yearWorkload.isEmpty()) {
+                monthlyWorkload.remove(year);
+                log.info("[TrainerWorkload] Removed year '{}' for trainer '{}'", year, username);
+            }
         }
-
-        return new TrainerWorkload(
-                trainer.getUsername(),
-                trainer.getFirstName(),
-                trainer.getLastName(),
-                trainer.isActive(),
-                trainer.getWorkload() != null ? trainer.getWorkload() : new ConcurrentHashMap<>(),
-                calculateTotalDuration(trainer.getWorkload() != null ? trainer.getWorkload() : new ConcurrentHashMap<>())
-        );
-}
-    private static int calculateTotalDuration(Map<Integer, Map<Month, Integer>> workload) {
-        return workload.values().stream()
-                .flatMap(yearlyData -> yearlyData.values().stream())
-                .mapToInt(Integer::intValue)
-                .sum();
     }
 
-
+    public int getMonthlyWorkload(int year, int month) {
+        Month monthEnum = Month.values()[month - 1]; // Convert month integer to enum
+        return monthlyWorkload.getOrDefault(year, new HashMap<>()).getOrDefault(monthEnum, 0); // Default to zero hours
+    }
 }

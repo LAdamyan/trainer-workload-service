@@ -2,101 +2,81 @@ package com.trainer.workload.service;
 
 import com.trainer.workload.model.ActionType;
 import com.trainer.workload.model.Month;
-import com.trainer.workload.model.TrainerWorkload;
 import com.trainer.workload.model.TrainerWorkloadRequest;
+import com.trainer.workload.model.TrainerWorkloadResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.NoSuchElementException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TrainerWorkloadServiceTest {
 
     private TrainerWorkloadService trainerWorkloadService;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         trainerWorkloadService = new TrainerWorkloadService();
     }
 
     @Test
-    void testProcessWorkloadAdd() {
-        TrainerWorkloadRequest request = new TrainerWorkloadRequest(
-                "trainer1", "John", "Doe", true,
-                LocalDate.of(2023, 1, 15), 60, ActionType.ADD
-        );
+    public void testProcessWorkload_addWorkload() {
+
+        String trainerUsername = "trainer1";
+        LocalDate trainingDate = LocalDate.of(2023, 9, 22); // September 2023
+        int trainingDuration = 2; // 2 hours
+        ActionType actionType = ActionType.ADD; // Assuming ADD is defined somewhere
+
+        TrainerWorkloadRequest request = new TrainerWorkloadRequest(trainerUsername,null,null,true,trainingDate,trainingDuration,actionType);
 
         trainerWorkloadService.processWorkload(request);
 
-        int hours = trainerWorkloadService.getMonthlyTrainingHours("trainer1", 2023, Month.JANUARY);
-        assertEquals(60, hours);
+        TrainerWorkloadResponse response = trainerWorkloadService.getTrainerWorkload(trainerUsername, 2023, Month.SEPTEMBER);
+
+        assertEquals(trainerUsername, response.getTrainerUsername());
+        assertEquals(2023, response.getYear());
+        assertEquals(Month.SEPTEMBER, response.getMonth());
+        assertEquals(2, response.getTotalHours()); // Workload should be updated to 2 hours
     }
 
     @Test
-    void testProcessWorkloadDelete() {
-        TrainerWorkloadRequest addRequest = new TrainerWorkloadRequest(
-                "trainer1", "John", "Doe", true,
-                LocalDate.of(2023, 1, 15), 60, ActionType.ADD
-        );
-        trainerWorkloadService.processWorkload(addRequest);
+    public void testProcessWorkload_removeWorkload() {
+        // Prepare the initial workload
+        String trainerUsername = "trainer1";
+        LocalDate trainingDate = LocalDate.of(2023, 9, 22); // September 2023
+        int trainingDuration = 2; // 2 hours
+        ActionType actionType = ActionType.ADD; // Assuming ADD is defined somewhere
+        TrainerWorkloadRequest requestAdd = new TrainerWorkloadRequest(trainerUsername,null,null,true,trainingDate,trainingDuration,actionType);
 
-        TrainerWorkloadRequest deleteRequest = new TrainerWorkloadRequest(
-                "trainer1", "John", "Doe", true,
-                LocalDate.of(2023, 1, 15), 30, ActionType.DELETE
-        );
-        trainerWorkloadService.processWorkload(deleteRequest);
+        trainerWorkloadService.processWorkload(requestAdd);
 
-        int hours = trainerWorkloadService.getMonthlyTrainingHours("trainer1", 2023, Month.JANUARY);
-        assertEquals(30, hours);
+        ActionType removeActionType = ActionType.DELETE;
+        TrainerWorkloadRequest requestRemove = new TrainerWorkloadRequest(trainerUsername,null,null,true,trainingDate,trainingDuration,removeActionType);
+        trainerWorkloadService.processWorkload(requestRemove);
+
+        TrainerWorkloadResponse response = trainerWorkloadService.getTrainerWorkload(trainerUsername, 2023, Month.SEPTEMBER);
+
+        assertEquals(trainerUsername, response.getTrainerUsername());
+        assertEquals(2023, response.getYear());
+        assertEquals(Month.SEPTEMBER, response.getMonth());
+        assertEquals(0, response.getTotalHours());
     }
 
     @Test
-    void testGetMonthlyTrainingHoursNoData() {
-        int hours = trainerWorkloadService.getMonthlyTrainingHours("trainer1", 2023, Month.JANUARY);
-        assertEquals(0, hours);
+    public void testGetTrainerWorkload_noWorkload() {
+        String trainerUsername = "trainer2";
+        TrainerWorkloadResponse response = trainerWorkloadService.getTrainerWorkload(trainerUsername, 2023, Month.OCTOBER);
+
+        assertEquals(trainerUsername, response.getTrainerUsername());
+        assertEquals(2023, response.getYear());
+        assertEquals(Month.OCTOBER, response.getMonth());
+        assertEquals(0, response.getTotalHours());
     }
 
-    @Test
-    void testGetAllWorkloadData() {
-        List<TrainerWorkload> workloadData = trainerWorkloadService.getAllWorkloadData();
-        assertTrue(workloadData.isEmpty());
-    }
 
-    @Test
-    void testGetTrainerWorkload() {
-        TrainerWorkloadRequest request = new TrainerWorkloadRequest(
-                "trainer1", "John", "Doe", true,
-                LocalDate.of(2023, 1, 15), 60, ActionType.ADD
-        );
-        trainerWorkloadService.processWorkload(request);
-
-        TrainerWorkload trainerWorkload = trainerWorkloadService.getTrainerWorkload("trainer1");
-        assertNotNull(trainerWorkload);
-        assertEquals("trainer1", trainerWorkload.getUsername());
-    }
-
-    @Test
-    void testGetTrainerWorkloadNotFound() {
-        assertThrows(NoSuchElementException.class, () -> {
-            trainerWorkloadService.getTrainerWorkload("nonexistent");
-        });
-    }
-
-    @Test
-    void testDeleteTrainer() {
-        TrainerWorkloadRequest request = new TrainerWorkloadRequest(
-                "trainer1", "John", "Doe", true,
-                LocalDate.of(2023, 1, 15), 60, ActionType.ADD
-        );
-        trainerWorkloadService.processWorkload(request);
-
-        boolean deleted = trainerWorkloadService.deleteTrainer("trainer1");
-        assertTrue(deleted);
-        assertThrows(NoSuchElementException.class, () -> {
-            trainerWorkloadService.getTrainerWorkload("trainer1");
-        });
-    }
 }

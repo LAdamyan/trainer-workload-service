@@ -7,11 +7,14 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 public class TrainerWorkloadRequest {
-    private String username;
-    private String firstName;
-    private String lastName;
+    private String trainerUsername;
+    private String trainerFirstName;
+    private String trainerLastName;
     private boolean isActive;
     private LocalDate trainingDate;
     private int trainingDuration;
     private ActionType actionType;
+
+    public TrainerWorkloadRequest(String trainer1, LocalDate of, int i, ActionType actionType) {
+    }
 }

@@ -9,20 +9,17 @@ import static org.junit.jupiter.api.Assertions.*;
 class TrainerWorkloadRequestTest {
 
     @Test
-    void testTrainerWorkloadRequestInitialization() {
+    void testTrainerWorkloadRequest() {
+        LocalDate trainingDate = LocalDate.of(2023, 1, 1);
         TrainerWorkloadRequest request = new TrainerWorkloadRequest(
-                "trainer1", "John", "Doe", true,
-                LocalDate.of(2023, 1, 15), 60, ActionType.ADD
-        );
+                "trainer1", "John", "Doe", true, trainingDate, 5, ActionType.ADD);
 
-        assertNotNull(request);
-        assertEquals("trainer1", request.getUsername());
-        assertEquals("John", request.getFirstName());
-        assertEquals("Doe", request.getLastName());
+        assertEquals("trainer1", request.getTrainerUsername());
+        assertEquals("John", request.getTrainerFirstName());
+        assertEquals("Doe", request.getTrainerLastName());
         assertEquals(true, request.isActive());
-        assertEquals(LocalDate.of(2023, 1, 15), request.getTrainingDate());
-        assertEquals(60, request.getTrainingDuration());
+        assertEquals(trainingDate, request.getTrainingDate());
+        assertEquals(5, request.getTrainingDuration());
         assertEquals(ActionType.ADD, request.getActionType());
     }
-
 }
