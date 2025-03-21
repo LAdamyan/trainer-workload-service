@@ -1,94 +1,62 @@
 package com.trainer.workload.controller;
 
-import com.trainer.workload.config.jwt.JwtUtil;
+
 import com.trainer.workload.model.Month;
-import com.trainer.workload.model.TrainerWorkload;
 import com.trainer.workload.model.TrainerWorkloadRequest;
+import com.trainer.workload.model.TrainerWorkloadResponse;
 import com.trainer.workload.service.TrainerWorkloadService;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/workload")
 public class TrainerWorkloadController {
 
     private final TrainerWorkloadService trainerWorkloadService;
-    private final JwtUtil jwtUtil;
 
-    public TrainerWorkloadController(TrainerWorkloadService trainerWorkloadService, JwtUtil jwtUtil) {
+    public TrainerWorkloadController(TrainerWorkloadService trainerWorkloadService) {
         this.trainerWorkloadService = trainerWorkloadService;
-        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, String>> updateWorkload(@RequestBody TrainerWorkloadRequest request,
-                                                              @RequestHeader("Authorization") String token) {
-        String transactionId = MDC.get("transactionId");
-        log.info("[{}] Received updateWorkload request: {}", transactionId, request);
-
-        token = token.replace("Bearer ", "");
-
-        if (!jwtUtil.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid JWT Token"));
-        }
+    public ResponseEntity<String> updateWorkload(
+            @RequestBody TrainerWorkloadRequest request,
+            @RequestHeader("Authorization") String token) {
 
         trainerWorkloadService.processWorkload(request);
-
-        return ResponseEntity.ok(Map.of(
-                "message", "Trainer workload updated successfully.",
-                "transactionId", transactionId
-        ));
+        return ResponseEntity.ok("Trainer workload updated successfully.");
     }
 
-    @GetMapping("/data")
-    public ResponseEntity<List<TrainerWorkload>> getAllWorkloadData() {
-        String transactionId = MDC.get("transactionId");
-        log.info("[{}] Received getAllWorkloadData request", transactionId);
+    @GetMapping
+    public ResponseEntity<TrainerWorkloadResponse> getTrainerWorkload(
+            @PathVariable String trainerUsername, // Use @PathVariable
+            @RequestParam int year,
+            @RequestParam Month month,
+            @RequestHeader("Authorization") String token) {
 
-        List<TrainerWorkload> workloadData = trainerWorkloadService.getAllWorkloadData();
-        log.info("[{}] Retrieved workload data successfully, size: {}", transactionId, workloadData.size());
-
-        return ResponseEntity.ok(workloadData);
+        TrainerWorkloadResponse response = trainerWorkloadService.getTrainerWorkload(trainerUsername, year, month);
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/data/{username}")
-    public ResponseEntity<TrainerWorkload> getTrainerWorkload(@PathVariable String username) {
-        String transactionId = MDC.get("transactionId");
-        log.info("[{}] Fetching workload data for trainer: {}", transactionId, username);
-
-        TrainerWorkload trainerData = trainerWorkloadService.getTrainerWorkload(username);
-
-        return ResponseEntity.ok(trainerData);
+    @GetMapping("/all-data")
+    public ResponseEntity<List<TrainerWorkloadResponse>> getAllTrainerWorkloads(
+            @RequestHeader("Authorization") String token) { // Accepts backend token
+        List<TrainerWorkloadResponse> responses = trainerWorkloadService.getAllTrainerWorkloads();
+        return ResponseEntity.ok(responses);
     }
 
-    @DeleteMapping("/{username}")
-    public ResponseEntity<Map<String, String>> deleteTrainer(@PathVariable String username, @RequestHeader("Authorization") String token) {
-        String transactionId = MDC.get("transactionId");
-        log.info("[{}] Deleting workload data for trainer: {}", transactionId, username);
-
-        boolean deleted = trainerWorkloadService.deleteTrainer(username);
-        if (!deleted) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "message", "Trainer not found.",
-                    "username", username
-            ));
-        }
-
-        return ResponseEntity.ok(Map.of(
-                "message", "Trainer deleted successfully.",
-                "username", username
-        ));
+    @GetMapping("/trainers")
+    public ResponseEntity<List<String>> getAllTrainers(
+            @RequestHeader("Authorization") String token) { // Accepts backend token
+        List<String> trainerUsernames = trainerWorkloadService.getAllTrainers();
+        return ResponseEntity.ok(trainerUsernames);
     }
-    
-
-   
 }
+
 
 
 
