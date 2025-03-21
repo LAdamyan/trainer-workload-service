@@ -32,8 +32,8 @@ public class TrainerWorkloadController {
     }
 
     @GetMapping
-    public  ResponseEntity<TrainerWorkloadResponse>  getTrainerWorkload(
-            @RequestParam String trainerUsername,
+    public ResponseEntity<TrainerWorkloadResponse> getTrainerWorkload(
+            @PathVariable String trainerUsername, // Use @PathVariable
             @RequestParam int year,
             @RequestParam Month month,
             @RequestHeader("Authorization") String token) {

@@ -2,9 +2,11 @@ package com.trainer.workload.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class TrainerWorkloadRequest {
     private String trainerUsername;
@@ -15,6 +17,5 @@ public class TrainerWorkloadRequest {
     private int trainingDuration;
     private ActionType actionType;
 
-    public TrainerWorkloadRequest(String trainer1, LocalDate of, int i, ActionType actionType) {
-    }
+
 }
